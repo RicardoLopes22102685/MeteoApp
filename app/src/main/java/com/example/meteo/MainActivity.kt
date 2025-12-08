@@ -2,7 +2,7 @@ package com.example.meteo
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log // Para debug
+import android.util.Log
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.Spinner
@@ -23,6 +23,8 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
+        // --- CODE KEPT FROM HEAD (Navigation Logic) ---
+
         val spinnerStations = findViewById<Spinner>(R.id.spinnerStationSelect)
         val btnOpenGraph = findViewById<Button>(R.id.btnGoToGraph)
 
@@ -35,7 +37,6 @@ class MainActivity : AppCompatActivity() {
         // (Opcional) Começa na STATION_01
         spinnerStations.setSelection(1)
 
-        // --- O CÓDIGO CRÍTICO ESTÁ AQUI ---
         btnOpenGraph.setOnClickListener {
             // 1. Ler o que está escrito no Spinner AGORA
             val selectedStation = spinnerStations.selectedItem.toString()
