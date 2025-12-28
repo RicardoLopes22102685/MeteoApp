@@ -213,12 +213,12 @@ class GraphActivity : AppCompatActivity() {
         else "➡ Estável"
 
         addStatCard("Máxima", "%.1f °C".format(max), "#FFCDD2".toColorInt())
-        addStatCard("Mínima", "%.1f °C".format(min), Color.parseColor("#BBDEFB"))
-        addStatCard("Média", "%.2f °C".format(avg), Color.parseColor("#E1BEE7"))
+        addStatCard("Mínima", "%.1f °C".format(min), "#BBDEFB".toColorInt())
+        addStatCard("Média", "%.2f °C".format(avg), "#E1BEE7".toColorInt())
         addStatCard("Mediana", "%.1f °C".format(median), Color.WHITE)
         addStatCard("Moda", "%.1f °C".format(mode), Color.WHITE)
         addStatCard("Amplitude", "%.1f °C".format(amplitude), Color.WHITE)
-        addStatCard("Tendência", trend, Color.parseColor("#DCEDC8"))
+        addStatCard("Tendência", trend, "#DCEDC8".toColorInt())
         addStatCard("Registos", "${rawTempList.size}", Color.WHITE)
     }
 
