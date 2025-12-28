@@ -34,8 +34,6 @@ class MainActivity : AppCompatActivity() {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerStations.adapter = adapter
 
-        // (Opcional) Começa na STATION_01
-        spinnerStations.setSelection(1)
 
         btnOpenGraph.setOnClickListener {
             // 1. Ler o que está escrito no Spinner AGORA

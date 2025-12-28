@@ -44,7 +44,7 @@ class GraphActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_graph)
 
-        currentStationId = intent.getStringExtra("STATION_ID") ?: "STATION_01"
+        currentStationId = intent.getStringExtra("STATION_ID") ?: "STATION_00"
 
         lineChart = findViewById(R.id.lineChart)
         btnDate = findViewById(R.id.btnSelectDate)
