@@ -24,6 +24,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.roundToInt
+import androidx.core.graphics.toColorInt
 
 class GraphActivity : AppCompatActivity() {
 
@@ -36,7 +37,7 @@ class GraphActivity : AppCompatActivity() {
     private val chartDataList = ArrayList<Entry>()
     private val rawTempList = ArrayList<Float>()
 
-    private var currentStationId: String = "STATION_01"
+    private var currentStationId: String = "STATION_00"
     private val selectedCalendar = Calendar.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -211,7 +212,7 @@ class GraphActivity : AppCompatActivity() {
         else if (lastTemp < firstTemp) "⬇ Descida (${"%.1f".format(lastTemp - firstTemp)})"
         else "➡ Estável"
 
-        addStatCard("Máxima", "%.1f °C".format(max), Color.parseColor("#FFCDD2"))
+        addStatCard("Máxima", "%.1f °C".format(max), "#FFCDD2".toColorInt())
         addStatCard("Mínima", "%.1f °C".format(min), Color.parseColor("#BBDEFB"))
         addStatCard("Média", "%.2f °C".format(avg), Color.parseColor("#E1BEE7"))
         addStatCard("Mediana", "%.1f °C".format(median), Color.WHITE)
