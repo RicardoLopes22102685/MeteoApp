@@ -30,7 +30,7 @@ class MainActivity : AppCompatActivity() {
 
         // Configurar o menu das estações
         val stations = arrayOf("STATION_00", "STATION_01", "STATION_02", "STATION_03")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, stations)
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, stations)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerStations.adapter = adapter
 
@@ -39,7 +39,7 @@ class MainActivity : AppCompatActivity() {
             // 1. Ler o que está escrito no Spinner AGORA
             val selectedStation = spinnerStations.selectedItem.toString()
 
-            Log.i("MainActivity", "O utilizador escolheu: $selectedStation") // Log para confirmares
+            Log.i("MainActivity", "O utilizador escolheu: $selectedStation") // Log para confirmar
 
             val intent = Intent(this, GraphActivity::class.java)
 

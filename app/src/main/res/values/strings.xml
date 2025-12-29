@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">Meteo</string>
+    <string name="app_name">Meteo Hub</string>
+    <string name="station_menu_text">Selecione a estação:</string>
+    <string name="station_select_button_placeholder">Ver dados"</string>
 </resources>
