@@ -53,9 +53,6 @@ class GraphActivity : AppCompatActivity() {
         btnDate = findViewById(R.id.btnSelectDate)
         tvTitle = findViewById(R.id.tvStationTitle)
         statsContainer = findViewById(R.id.statsContainer)
-        tvStatsInfo = findViewById(R.id.tvStatsInfo)
-
-        // Initialize stat card views
         tvMaximaValue = findViewById(R.id.tvMaximaValue)
         tvMinimaValue = findViewById(R.id.tvMinimaValue)
         tvMediaValue = findViewById(R.id.tvMediaValue)
@@ -75,7 +72,6 @@ class GraphActivity : AppCompatActivity() {
     private fun loadLatestDataDate() {
         val db = FirebaseFirestore.getInstance()
         lineChart.setNoDataText("A procurar registos...")
-        tvStatsInfo.text = "A procurar dados..."
 
         // Pede apenas o registo mais recente (Ordenado por timestamp DESC, limite 1)
         db.collection(currentStationId)
@@ -145,7 +141,6 @@ class GraphActivity : AppCompatActivity() {
 
         lineChart.clear()
         lineChart.setNoDataText("A carregar...")
-        tvStatsInfo.text = "A calcular estatísticas..."
 
         val db = FirebaseFirestore.getInstance()
 
@@ -159,7 +154,6 @@ class GraphActivity : AppCompatActivity() {
 
                 if (result.isEmpty) {
                     lineChart.setNoDataText("Sem dados neste dia.")
-                    tvStatsInfo.text = "Sem dados para estatísticas."
                     lineChart.invalidate()
                     return@addOnSuccessListener
                 }
