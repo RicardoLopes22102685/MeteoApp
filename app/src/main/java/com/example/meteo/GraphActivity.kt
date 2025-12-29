@@ -2,12 +2,9 @@ package com.example.meteo
 
 import android.app.DatePickerDialog
 import android.graphics.Color
-import android.graphics.Typeface
 import android.os.Bundle
 import android.util.Log
-import android.view.Gravity
 import android.widget.Button
-import android.widget.GridLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -23,15 +20,22 @@ import com.google.firebase.firestore.Query
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
-import androidx.core.graphics.toColorInt
 
 class GraphActivity : AppCompatActivity() {
 
     private lateinit var lineChart: LineChart
     private lateinit var btnDate: Button
     private lateinit var tvTitle: TextView
-    private lateinit var statsGrid: GridLayout
+    private lateinit var statsContainer: LinearLayout
     private lateinit var tvStatsInfo: TextView
+
+    // Stat card views
+    private lateinit var tvMaximaValue: TextView
+    private lateinit var tvMinimaValue: TextView
+    private lateinit var tvMediaValue: TextView
+    private lateinit var tvAmplitudeValue: TextView
+    private lateinit var tvTendenciaValue: TextView
+    private lateinit var tvRegistosValue: TextView
 
     private val chartDataList = ArrayList<Entry>()
     private val rawTempList = ArrayList<Float>()
@@ -48,13 +52,24 @@ class GraphActivity : AppCompatActivity() {
         lineChart = findViewById(R.id.lineChart)
         btnDate = findViewById(R.id.btnSelectDate)
         tvTitle = findViewById(R.id.tvStationTitle)
-        statsGrid = findViewById(R.id.statsGrid)
+        statsContainer = findViewById(R.id.statsContainer)
         tvStatsInfo = findViewById(R.id.tvStatsInfo)
+
+        // Initialize stat card views
+        tvMaximaValue = findViewById(R.id.tvMaximaValue)
+        tvMinimaValue = findViewById(R.id.tvMinimaValue)
+        tvMediaValue = findViewById(R.id.tvMediaValue)
+        tvAmplitudeValue = findViewById(R.id.tvAmplitudeValue)
+        tvTendenciaValue = findViewById(R.id.tvTendenciaValue)
+        tvRegistosValue = findViewById(R.id.tvRegistosValue)
+
         tvTitle.text = currentStationId
         setupChartProperties()
         setupDatePicker()
         loadLatestDataDate() //Verifica qual é a última data disponível
     }
+
+    // ...existing code...
 
     // Descobre o último dia com dados
     private fun loadLatestDataDate() {
@@ -131,8 +146,6 @@ class GraphActivity : AppCompatActivity() {
         lineChart.clear()
         lineChart.setNoDataText("A carregar...")
         tvStatsInfo.text = "A calcular estatísticas..."
-        statsGrid.removeAllViews()
-        statsGrid.addView(tvStatsInfo)
 
         val db = FirebaseFirestore.getInstance()
 
@@ -185,13 +198,10 @@ class GraphActivity : AppCompatActivity() {
     private fun calculateAndShowStats() {
         if (rawTempList.isEmpty()) return
 
-        statsGrid.removeAllViews()
-
         val max = rawTempList.maxOrNull() ?: 0f
         val min = rawTempList.minOrNull() ?: 0f
         val avg = rawTempList.average()
         val amplitude = max - min
-
 
         val firstTemp = rawTempList.first()
         val lastTemp = rawTempList.last()
@@ -199,43 +209,13 @@ class GraphActivity : AppCompatActivity() {
         else if (lastTemp < firstTemp) "⬇ Descida (${"%.1f".format(lastTemp - firstTemp)})"
         else "➡ Estável"
 
-        addStatCard("Máxima", "%.1f °C".format(max), "#FFCDD2".toColorInt())
-        addStatCard("Mínima", "%.1f °C".format(min), "#BBDEFB".toColorInt())
-        addStatCard("Média", "%.2f °C".format(avg), "#E1BEE7".toColorInt())
-        addStatCard("Amplitude", "%.1f °C".format(amplitude), Color.WHITE)
-        addStatCard("Tendência", trend, "#DCEDC8".toColorInt())
-        addStatCard("Registos", "${rawTempList.size}", Color.WHITE)
-    }
-
-    private fun addStatCard(title: String, value: String, bgColor: Int) {
-        val container = LinearLayout(this)
-        container.orientation = LinearLayout.VERTICAL
-        container.setPadding(30, 30, 30, 30)
-        container.setBackgroundColor(bgColor)
-
-        val params = GridLayout.LayoutParams()
-        params.width = 0
-        params.height = GridLayout.LayoutParams.WRAP_CONTENT
-        params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
-        params.setMargins(10, 10, 10, 10)
-        container.layoutParams = params
-
-        val tvTitle = TextView(this)
-        tvTitle.text = title.uppercase()
-        tvTitle.textSize = 12f
-        tvTitle.setTextColor(Color.GRAY)
-        tvTitle.gravity = Gravity.CENTER
-
-        val tvValue = TextView(this)
-        tvValue.text = value
-        tvValue.textSize = 20f
-        tvValue.setTypeface(null, Typeface.BOLD)
-        tvValue.setTextColor(Color.BLACK)
-        tvValue.gravity = Gravity.CENTER
-
-        container.addView(tvTitle)
-        container.addView(tvValue)
-        statsGrid.addView(container)
+        // Update stat card values
+        tvMaximaValue.text = "%.1f °C".format(max)
+        tvMinimaValue.text = "%.1f °C".format(min)
+        tvMediaValue.text = "%.2f °C".format(avg)
+        tvAmplitudeValue.text = "%.1f °C".format(amplitude)
+        tvTendenciaValue.text = trend
+        tvRegistosValue.text = "${rawTempList.size}"
     }
 
     private fun setupChartProperties() {
