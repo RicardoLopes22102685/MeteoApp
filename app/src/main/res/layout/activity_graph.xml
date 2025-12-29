@@ -21,11 +21,11 @@
 
     <Button
         android:id="@+id/btnSelectDate"
-        android:layout_width="wrap_content"
+        android:layout_width="139dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:layout_marginBottom="4dp"
-        android:backgroundTint="@color/black"
+        android:backgroundTint="#009688"
         android:text="Data" />
 
     <com.github.mikephil.charting.charts.LineChart
@@ -85,7 +85,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="--"
-                            android:textColor="#B6CB3636"
+                            android:textColor="#CDCB3636"
                             android:textSize="20sp"
                             android:textStyle="bold" />
 
@@ -123,7 +123,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="--"
-                            android:textColor="#CD0F2DD0"
+                            android:textColor="#B20F2DD0"
                             android:textSize="20sp"
                             android:textStyle="bold" />
 

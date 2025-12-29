@@ -66,8 +66,6 @@ class GraphActivity : AppCompatActivity() {
         loadLatestDataDate() //Verifica qual é a última data disponível
     }
 
-    // ...existing code...
-
     // Descobre o último dia com dados
     private fun loadLatestDataDate() {
         val db = FirebaseFirestore.getInstance()
