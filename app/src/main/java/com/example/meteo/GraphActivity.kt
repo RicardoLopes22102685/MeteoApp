@@ -23,7 +23,6 @@ import com.google.firebase.firestore.Query
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
-import kotlin.math.roundToInt
 import androidx.core.graphics.toColorInt
 
 class GraphActivity : AppCompatActivity() {
@@ -51,21 +50,15 @@ class GraphActivity : AppCompatActivity() {
         tvTitle = findViewById(R.id.tvStationTitle)
         statsGrid = findViewById(R.id.statsGrid)
         tvStatsInfo = findViewById(R.id.tvStatsInfo)
-
-        tvTitle.text = "A ver: $currentStationId"
-
+        tvTitle.text = currentStationId
         setupChartProperties()
         setupDatePicker()
-
-        // --- INICIALIZAÇÃO INTELIGENTE ---
-        // Em vez de fixar uma data, vamos perguntar qual é a última data disponível
-        loadLatestDataDate()
+        loadLatestDataDate() //Verifica qual é a última data disponível
     }
 
-    // Função nova: Descobre o último dia com dados
+    // Descobre o último dia com dados
     private fun loadLatestDataDate() {
         val db = FirebaseFirestore.getInstance()
-
         lineChart.setNoDataText("A procurar registos...")
         tvStatsInfo.text = "A procurar dados..."
 
@@ -199,12 +192,6 @@ class GraphActivity : AppCompatActivity() {
         val avg = rawTempList.average()
         val amplitude = max - min
 
-        val sortedList = rawTempList.sorted()
-        val middle = sortedList.size / 2
-        val median = if (sortedList.size % 2 == 1) sortedList[middle] else (sortedList[middle - 1] + sortedList[middle]) / 2.0
-
-        val frequencyMap = rawTempList.groupingBy { (it * 10).roundToInt() / 10.0 }.eachCount()
-        val mode = frequencyMap.maxByOrNull { it.value }?.key ?: 0.0
 
         val firstTemp = rawTempList.first()
         val lastTemp = rawTempList.last()
@@ -215,8 +202,6 @@ class GraphActivity : AppCompatActivity() {
         addStatCard("Máxima", "%.1f °C".format(max), "#FFCDD2".toColorInt())
         addStatCard("Mínima", "%.1f °C".format(min), "#BBDEFB".toColorInt())
         addStatCard("Média", "%.2f °C".format(avg), "#E1BEE7".toColorInt())
-        addStatCard("Mediana", "%.1f °C".format(median), Color.WHITE)
-        addStatCard("Moda", "%.1f °C".format(mode), Color.WHITE)
         addStatCard("Amplitude", "%.1f °C".format(amplitude), Color.WHITE)
         addStatCard("Tendência", trend, "#DCEDC8".toColorInt())
         addStatCard("Registos", "${rawTempList.size}", Color.WHITE)

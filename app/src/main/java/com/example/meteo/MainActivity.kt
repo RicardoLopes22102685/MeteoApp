@@ -23,17 +23,14 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
-        // --- CODE KEPT FROM HEAD (Navigation Logic) ---
-
         val spinnerStations = findViewById<Spinner>(R.id.spinnerStationSelect)
         val btnOpenGraph = findViewById<Button>(R.id.btnGoToGraph)
 
         // Configurar o menu das estações
-        val stations = arrayOf("STATION_00", "STATION_01", "STATION_02", "STATION_03")
+        val stations = arrayOf("STATION_00", "STATION_01")
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, stations)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerStations.adapter = adapter
-
 
         btnOpenGraph.setOnClickListener {
             // 1. Ler o que está escrito no Spinner AGORA
@@ -42,10 +39,7 @@ class MainActivity : AppCompatActivity() {
             Log.i("MainActivity", "O utilizador escolheu: $selectedStation") // Log para confirmar
 
             val intent = Intent(this, GraphActivity::class.java)
-
-            // 2. Colocar o nome na "mochila" (Extra) para a viagem
             intent.putExtra("STATION_ID", selectedStation)
-
             startActivity(intent)
         }
     }
