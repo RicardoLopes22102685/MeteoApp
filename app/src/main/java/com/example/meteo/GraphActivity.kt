@@ -9,6 +9,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
@@ -21,13 +22,16 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 
+enum class DataType {
+    TEMPERATURA, HUMIDADE, PARTICULAS
+}
+
 class GraphActivity : AppCompatActivity() {
 
     private lateinit var lineChart: LineChart
     private lateinit var btnDate: Button
     private lateinit var tvTitle: TextView
     private lateinit var statsContainer: LinearLayout
-    private lateinit var tvStatsInfo: TextView
 
     // Stat card views
     private lateinit var tvMaximaValue: TextView
@@ -37,11 +41,24 @@ class GraphActivity : AppCompatActivity() {
     private lateinit var tvTendenciaValue: TextView
     private lateinit var tvRegistosValue: TextView
 
+    // Data type switches
+    private lateinit var switchTemperatura: SwitchCompat
+    private lateinit var switchHumidade: SwitchCompat
+    private lateinit var switchParticulas: SwitchCompat
+
     private val chartDataList = ArrayList<Entry>()
     private val rawTempList = ArrayList<Float>()
+    private val rawHumidadeList = ArrayList<Float>()
+    private val rawParticulasList = ArrayList<Float>()
+
+    // Maps to store timestamp and grouped data for each type
+    private val tempGroupedData = mutableMapOf<Long, MutableList<Float>>()
+    private val humidadeGroupedData = mutableMapOf<Long, MutableList<Float>>()
+    private val particulasGroupedData = mutableMapOf<Long, MutableList<Float>>()
 
     private var currentStationId: String = "STATION_00"
     private val selectedCalendar = Calendar.getInstance()
+    private var selectedDataType: DataType = DataType.TEMPERATURA
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,9 +77,15 @@ class GraphActivity : AppCompatActivity() {
         tvTendenciaValue = findViewById(R.id.tvTendenciaValue)
         tvRegistosValue = findViewById(R.id.tvRegistosValue)
 
+        // Initialize switches
+        switchTemperatura = findViewById(R.id.switchTemperatura)
+        switchHumidade = findViewById(R.id.switchHumidade)
+        switchParticulas = findViewById(R.id.switchParticulas)
+
         tvTitle.text = currentStationId
         setupChartProperties()
         setupDatePicker()
+        setupDataTypeSwitches()
         loadLatestDataDate() //Verifica qual é a última data disponível
     }
 
@@ -119,6 +142,70 @@ class GraphActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupDataTypeSwitches() {
+        // Set initial state - only temperatura is checked
+        switchTemperatura.isChecked = true
+        switchHumidade.isChecked = false
+        switchParticulas.isChecked = false
+
+        switchTemperatura.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                switchHumidade.isChecked = false
+                switchParticulas.isChecked = false
+                selectedDataType = DataType.TEMPERATURA
+                repopulateChartDataList()
+                updateChartDisplay()
+                calculateAndShowStats()
+            }
+        }
+
+        switchHumidade.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                switchTemperatura.isChecked = false
+                switchParticulas.isChecked = false
+                selectedDataType = DataType.HUMIDADE
+                repopulateChartDataList()
+                updateChartDisplay()
+                calculateAndShowStats()
+            }
+        }
+
+        switchParticulas.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                switchTemperatura.isChecked = false
+                switchHumidade.isChecked = false
+                selectedDataType = DataType.PARTICULAS
+                repopulateChartDataList()
+                updateChartDisplay()
+                calculateAndShowStats()
+            }
+        }
+    }
+
+    private fun repopulateChartDataList() {
+        chartDataList.clear()
+
+        when (selectedDataType) {
+            DataType.TEMPERATURA -> {
+                for ((blockTs, temps) in tempGroupedData) {
+                    chartDataList.add(Entry(blockTs.toFloat(), temps.average().toFloat()))
+                }
+            }
+            DataType.HUMIDADE -> {
+                for ((blockTs, humidades) in humidadeGroupedData) {
+                    chartDataList.add(Entry(blockTs.toFloat(), humidades.average().toFloat()))
+                }
+            }
+            DataType.PARTICULAS -> {
+                for ((blockTs, particulas) in particulasGroupedData) {
+                    chartDataList.add(Entry(blockTs.toFloat(), particulas.average().toFloat()))
+                }
+            }
+        }
+
+        chartDataList.sortBy { it.x }
+    }
+
     private fun updateDateButtonText() {
         val format = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
         btnDate.text = format.format(selectedCalendar.time)
@@ -149,6 +236,11 @@ class GraphActivity : AppCompatActivity() {
             .addOnSuccessListener { result ->
                 chartDataList.clear()
                 rawTempList.clear()
+                rawHumidadeList.clear()
+                rawParticulasList.clear()
+                tempGroupedData.clear()
+                humidadeGroupedData.clear()
+                particulasGroupedData.clear()
 
                 if (result.isEmpty) {
                     lineChart.setNoDataText("Sem dados neste dia.")
@@ -157,26 +249,73 @@ class GraphActivity : AppCompatActivity() {
                 }
 
                 val groupedData = mutableMapOf<Long, MutableList<Float>>()
+                val groupedDataHumidade = mutableMapOf<Long, MutableList<Float>>()
+                val groupedDataParticulas = mutableMapOf<Long, MutableList<Float>>()
 
                 for (document in result) {
                     val temp = document.getDouble("temperatura")
+                    val humidade = document.getDouble("humidade")
+                    val particulas = document.getDouble("particulas")
                     val ts = document.getLong("timestamp")
 
-                    if (temp != null && ts != null) {
-                        rawTempList.add(temp.toFloat())
-
-                        // Média de 5 minutos
-                        val fiveMinBlockTs = (ts / 300) * 300
-                        if (!groupedData.containsKey(fiveMinBlockTs)) {
-                            groupedData[fiveMinBlockTs] = mutableListOf()
+                    if (ts != null) {
+                        // Process temperatura
+                        if (temp != null) {
+                            rawTempList.add(temp.toFloat())
+                            // Média de 5 minutos
+                            val fiveMinBlockTs = (ts / 300) * 300
+                            if (!groupedData.containsKey(fiveMinBlockTs)) {
+                                groupedData[fiveMinBlockTs] = mutableListOf()
+                            }
+                            groupedData[fiveMinBlockTs]?.add(temp.toFloat())
                         }
-                        groupedData[fiveMinBlockTs]?.add(temp.toFloat())
+
+                        // Process humidade
+                        if (humidade != null) {
+                            rawHumidadeList.add(humidade.toFloat())
+                            val fiveMinBlockTs = (ts / 300) * 300
+                            if (!groupedDataHumidade.containsKey(fiveMinBlockTs)) {
+                                groupedDataHumidade[fiveMinBlockTs] = mutableListOf()
+                            }
+                            groupedDataHumidade[fiveMinBlockTs]?.add(humidade.toFloat())
+                        }
+
+                        // Process particulas
+                        if (particulas != null) {
+                            rawParticulasList.add(particulas.toFloat())
+                            val fiveMinBlockTs = (ts / 300) * 300
+                            if (!groupedDataParticulas.containsKey(fiveMinBlockTs)) {
+                                groupedDataParticulas[fiveMinBlockTs] = mutableListOf()
+                            }
+                            groupedDataParticulas[fiveMinBlockTs]?.add(particulas.toFloat())
+                        }
                     }
                 }
 
-                for ((blockTs, temps) in groupedData) {
-                    chartDataList.add(Entry(blockTs.toFloat(), temps.average().toFloat()))
+                // Store grouped data in member variables for switching data types later
+                tempGroupedData.putAll(groupedData)
+                humidadeGroupedData.putAll(groupedDataHumidade)
+                particulasGroupedData.putAll(groupedDataParticulas)
+
+                // Populate chartDataList based on selected data type
+                when (selectedDataType) {
+                    DataType.TEMPERATURA -> {
+                        for ((blockTs, temps) in groupedData) {
+                            chartDataList.add(Entry(blockTs.toFloat(), temps.average().toFloat()))
+                        }
+                    }
+                    DataType.HUMIDADE -> {
+                        for ((blockTs, humidades) in groupedDataHumidade) {
+                            chartDataList.add(Entry(blockTs.toFloat(), humidades.average().toFloat()))
+                        }
+                    }
+                    DataType.PARTICULAS -> {
+                        for ((blockTs, particulas) in groupedDataParticulas) {
+                            chartDataList.add(Entry(blockTs.toFloat(), particulas.average().toFloat()))
+                        }
+                    }
                 }
+
                 chartDataList.sortBy { it.x }
 
                 updateChartDisplay()
@@ -188,26 +327,40 @@ class GraphActivity : AppCompatActivity() {
     }
 
     private fun calculateAndShowStats() {
-        if (rawTempList.isEmpty()) return
+        // Select the appropriate data list based on selected data type
+        val dataList = when (selectedDataType) {
+            DataType.TEMPERATURA -> rawTempList
+            DataType.HUMIDADE -> rawHumidadeList
+            DataType.PARTICULAS -> rawParticulasList
+        }
 
-        val max = rawTempList.maxOrNull() ?: 0f
-        val min = rawTempList.minOrNull() ?: 0f
-        val avg = rawTempList.average()
+        if (dataList.isEmpty()) return
+
+        val max = dataList.maxOrNull() ?: 0f
+        val min = dataList.minOrNull() ?: 0f
+        val avg = dataList.average()
         val amplitude = max - min
 
-        val firstTemp = rawTempList.first()
-        val lastTemp = rawTempList.last()
-        val trend = if (lastTemp > firstTemp) "⬆ Subida (+${"%.1f".format(lastTemp - firstTemp)})"
-        else if (lastTemp < firstTemp) "⬇ Descida (${"%.1f".format(lastTemp - firstTemp)})"
+        val firstValue = dataList.first()
+        val lastValue = dataList.last()
+        val trend = if (lastValue > firstValue) "⬆ Subida (+${"%.1f".format(lastValue - firstValue)})"
+        else if (lastValue < firstValue) "⬇ Descida (${"%.1f".format(lastValue - firstValue)})"
         else "➡ Estável"
 
+        // Get the unit suffix based on data type
+        val unitSuffix = when (selectedDataType) {
+            DataType.TEMPERATURA -> " °C"
+            DataType.HUMIDADE -> " %"
+            DataType.PARTICULAS -> " µg/m³"
+        }
+
         // Update stat card values
-        tvMaximaValue.text = "%.1f °C".format(max)
-        tvMinimaValue.text = "%.1f °C".format(min)
-        tvMediaValue.text = "%.2f °C".format(avg)
-        tvAmplitudeValue.text = "%.1f °C".format(amplitude)
+        tvMaximaValue.text = "%.1f$unitSuffix".format(max)
+        tvMinimaValue.text = "%.1f$unitSuffix".format(min)
+        tvMediaValue.text = "%.2f$unitSuffix".format(avg)
+        tvAmplitudeValue.text = "%.1f$unitSuffix".format(amplitude)
         tvTendenciaValue.text = trend
-        tvRegistosValue.text = "${rawTempList.size}"
+        tvRegistosValue.text = "${dataList.size}"
     }
 
     private fun setupChartProperties() {
@@ -231,16 +384,22 @@ class GraphActivity : AppCompatActivity() {
 
     private fun updateChartDisplay() {
         if (chartDataList.isEmpty()) return
-        val dayFormat = SimpleDateFormat("dd/MM", Locale.getDefault())
-        val dateString = dayFormat.format(selectedCalendar.time)
-        val dataSet = LineDataSet(chartDataList, "$currentStationId")
+
+        // Determine label and colors based on data type
+        val (label, lineColor, fillColor) = when (selectedDataType) {
+            DataType.TEMPERATURA -> Triple("Temperatura", Color.rgb(255, 87, 34), Color.rgb(255, 204, 188))
+            DataType.HUMIDADE -> Triple("Humidade", Color.rgb(33, 150, 243), Color.rgb(187, 222, 251))
+            DataType.PARTICULAS -> Triple("Partículas", Color.rgb(156, 39, 176), Color.rgb(225, 190, 231))
+        }
+
+        val dataSet = LineDataSet(chartDataList, "$currentStationId - $label")
         dataSet.mode = LineDataSet.Mode.LINEAR
         dataSet.setDrawCircles(false)
         dataSet.setDrawValues(false)
-        dataSet.color = Color.rgb(41, 121, 255)
+        dataSet.color = lineColor
         dataSet.lineWidth = 2f
         dataSet.setDrawFilled(true)
-        dataSet.fillColor = Color.rgb(187, 222, 251)
+        dataSet.fillColor = fillColor
         dataSet.fillAlpha = 150
         val lineData = LineData(dataSet)
         lineChart.data = lineData
