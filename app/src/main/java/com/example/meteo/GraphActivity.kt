@@ -86,6 +86,7 @@ class GraphActivity : AppCompatActivity() {
         setupChartProperties()
         setupDatePicker()
         setupDataTypeSwitches()
+        setupBackButton()
         loadLatestDataDate() //Verifica qual é a última data disponível
     }
 
@@ -179,6 +180,13 @@ class GraphActivity : AppCompatActivity() {
                 updateChartDisplay()
                 calculateAndShowStats()
             }
+        }
+    }
+
+    private fun setupBackButton() {
+        val btnBack = findViewById<Button>(R.id.btnBack)
+        btnBack.setOnClickListener {
+            finish()
         }
     }
 
@@ -341,11 +349,27 @@ class GraphActivity : AppCompatActivity() {
         val avg = dataList.average()
         val amplitude = max - min
 
-        val firstValue = dataList.first()
-        val lastValue = dataList.last()
-        val trend = if (lastValue > firstValue) "⬆ Subida (+${"%.1f".format(lastValue - firstValue)})"
-        else if (lastValue < firstValue) "⬇ Descida (${"%.1f".format(lastValue - firstValue)})"
-        else "➡ Estável"
+        // Calculate trend based on chronologically ordered data
+        val groupedData = when (selectedDataType) {
+            DataType.TEMPERATURA -> tempGroupedData
+            DataType.HUMIDADE -> humidadeGroupedData
+            DataType.PARTICULAS -> particulasGroupedData
+        }
+
+        val sortedTimestamps = groupedData.keys.sorted()
+        val trend = if (sortedTimestamps.isNotEmpty()) {
+            val firstBlockTs = sortedTimestamps.first()
+            val lastBlockTs = sortedTimestamps.last()
+            val firstValue = groupedData[firstBlockTs]?.average() ?: 0.0
+            val lastValue = groupedData[lastBlockTs]?.average() ?: 0.0
+            val difference = lastValue - firstValue
+
+            if (lastValue > firstValue) "⬆ Subida (+${"%.1f".format(difference)})"
+            else if (lastValue < firstValue) "⬇ Descida (${"%.1f".format(difference)})"
+            else "➡ Estável"
+        } else {
+            "➡ Estável"
+        }
 
         // Get the unit suffix based on data type
         val unitSuffix = when (selectedDataType) {
@@ -355,10 +379,10 @@ class GraphActivity : AppCompatActivity() {
         }
 
         // Update stat card values
-        tvMaximaValue.text = "%.1f$unitSuffix".format(max)
-        tvMinimaValue.text = "%.1f$unitSuffix".format(min)
-        tvMediaValue.text = "%.2f$unitSuffix".format(avg)
-        tvAmplitudeValue.text = "%.1f$unitSuffix".format(amplitude)
+        tvMaximaValue.text = "${"%.1f".format(max)}$unitSuffix"
+        tvMinimaValue.text = "${"%.1f".format(min)}$unitSuffix"
+        tvMediaValue.text = "${"%.2f".format(avg)}$unitSuffix"
+        tvAmplitudeValue.text = "${"%.1f".format(amplitude)}$unitSuffix"
         tvTendenciaValue.text = trend
         tvRegistosValue.text = "${dataList.size}"
     }
